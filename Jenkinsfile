@@ -1,91 +1,90 @@
 pipeline {
     agent any
 
+    environment {
+        EMAIL_RECIPIENT = 'kirtikasharma5104@gmail.com'
+    }
+
     stages {
         stage('Build') {
             steps {
-                script {
-                    // Example for Maven build
-                    sh 'mvn clean install'
-                }
+                echo 'Building the code...'
+                // Example: Use Maven to build the code
+                // sh 'mvn clean install'
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
-                script {
-                    // Example for running tests with Maven
-                    sh 'mvn test'
-                }
+                echo 'Running Unit and Integration Tests...'
+                // Example: Run tests with a tool like JUnit or TestNG
+                // sh 'mvn test'
             }
         }
 
         stage('Code Analysis') {
             steps {
-                script {
-                    // Example using SonarQube
-                    // Ensure SonarQube Scanner is installed and configured
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=your_project_key -Dsonar.host.url=http://your_sonarqube_url'
-                }
+                echo 'Performing Code Analysis...'
+                // Example: Use a tool like SonarQube for code analysis
+                // sh 'sonar-scanner'
             }
         }
 
         stage('Security Scan') {
             steps {
-                script {
-                    // Example using OWASP Dependency-Check
-                    sh 'dependency-check.sh --project your_project --out .'
+                echo 'Performing Security Scan...'
+                // Example: Use a tool like OWASP Dependency Check
+                // sh 'dependency-check.sh --project myproject --scan ./'
+            }
+            post {
+                always {
+                    emailext subject: "Jenkins: Security Scan Stage",
+                              body: "The Security Scan stage has completed with status: ${currentBuild.currentResult}",
+                              to: "${EMAIL_RECIPIENT}",
+                              attachLog: true
                 }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                script {
-                    // Example deployment script using AWS CLI
-                    // Make sure AWS CLI is configured with proper credentials
-                    sh 'aws s3 cp your-build-artifact.zip s3://your-staging-bucket/ --region your-region'
-                    // Additional deployment steps as needed
-                }
+                echo 'Deploying to Staging...'
+                // Example: Deploy to AWS EC2 or other staging environment
+                // sh 'deploy_to_staging.sh'
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
-                script {
-                    // Example using Postman collection runner
-                    sh 'newman run your_postman_collection.json'
+                echo 'Running Integration Tests on Staging...'
+                // Example: Run integration tests on the staging server
+                // sh 'run_staging_tests.sh'
+            }
+            post {
+                always {
+                    emailext subject: "Jenkins: Integration Tests on Staging",
+                              body: "The Integration Tests on Staging stage has completed with status: ${currentBuild.currentResult}",
+                              to: "${EMAIL_RECIPIENT}",
+                              attachLog: true
                 }
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                script {
-                    // Example deployment script using AWS CLI
-                    sh 'aws s3 cp your-build-artifact.zip s3://your-production-bucket/ --region your-region'
-                    // Additional deployment steps as needed
-                }
+                echo 'Deploying to Production...'
+                // Example: Deploy to production environment
+                // sh 'deploy_to_production.sh'
             }
         }
     }
 
     post {
-        success {
-            emailext(
-                subject: "Build Successful",
-                body: "The build was successful. Please find the build logs attached.",
-                to: "kirtikasharma5104@gmail.com",
-                attachmentsPattern: 'logs/**/*.log'
-            )
-        }
-        failure {
-            emailext(
-                subject: "Build Failed",
-                body: "The build failed. Check the logs for details.",
-                to: "kirtikasharma5104@gmail.com",
-                attachmentsPattern: 'logs/**/*.log'
-            )
+        always {
+            emailext subject: "Jenkins: Pipeline Completed",
+                      body: "The Jenkins pipeline has completed with status: ${currentBuild.currentResult}",
+                      to: "${EMAIL_RECIPIENT}",
+                      attachLog: true
         }
     }
 }
